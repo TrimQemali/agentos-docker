@@ -1,7 +1,4 @@
-App Settings
-============
 
-Shared runtime objects for the platform.
 
 from os import getenv
 
