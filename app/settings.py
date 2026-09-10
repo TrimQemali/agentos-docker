@@ -4,9 +4,6 @@ from os import getenv
 
 from agno.models.openai.like import OpenAILike
 
-# z.ai's GLM Coding Plan endpoint — OpenAI-compatible chat completions, coding-scenario
-# only (no embeddings; see db/session.py's OpenAIEmbedder, which stays on OPENAI_API_KEY
-# and is simply unused until a key with embeddings access is set).
 ZAI_BASE_URL = getenv("ZAI_BASE_URL", "https://api.z.ai/api/coding/paas/v4")
 ZAI_MODEL_ID = getenv("ZAI_MODEL_ID", "glm-4.7")
 
