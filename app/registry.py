@@ -21,10 +21,9 @@ from app.learning import shared_learning
 from app.notes import get_shared_notes_tools
 from app.settings import default_model
 from app.tools import (
-    get_agno_docs_tools,
+    # get_agno_docs_tools, get_parallel_tools disabled below
     get_file_generation_tools,
     get_media_tools,
-    get_parallel_tools,
     get_slack_tools,
 )
 from db import get_postgres_db
@@ -32,8 +31,13 @@ from db import get_postgres_db
 registry = Registry(
     name="AgentOS Registry",
     tools=[
-        *get_agno_docs_tools(),
-        *get_parallel_tools(),
+        # TEMPORARILY DISABLED: both factories fall back to keyless MCP connections
+        # (docs.agno.com/mcp, search.parallel.ai/mcp) that AgentOS opens eagerly at boot --
+        # a failed connection to either refuses the whole app from starting. docs.agno.com
+        # is currently rate-limiting this host (429); disabling both here rather than
+        # discovering the second failure on a second redeploy. Re-enable
+        # (`*get_agno_docs_tools(), *get_parallel_tools(),`) once resolved, or set
+        # PARALLEL_API_KEY to move the Parallel one off keyless MCP permanently.
         *get_shared_notes_tools(),
         *get_slack_tools(),
         *get_media_tools(),

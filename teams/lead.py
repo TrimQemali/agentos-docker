@@ -38,13 +38,16 @@ from db import get_postgres_db
 # When PARALLEL_API_KEY is set, use the parallel-web SDK.
 # Without a key, fall back to the keyless MCP.
 # AgentOS handles MCP connect/close as part of its lifespan.
+# TEMPORARILY DISABLED (keyless branch): search.parallel.ai/mcp is an eager boot-time MCP
+# connection just like docs.agno.com/mcp -- a failure there refuses the whole app from
+# starting, and docs.agno.com is currently rate-limiting this host the same way. Until
+# that's resolved (or PARALLEL_API_KEY is set), web_tools is left unwired below rather
+# than risk the same boot failure from this second keyless MCP.
+web_tools: ParallelTools | MCPTools | None
 if getenv("PARALLEL_API_KEY"):
-    web_tools: ParallelTools | MCPTools = ParallelTools()
+    web_tools = ParallelTools()
 else:
-    # Increase timeout to 30 seconds to handle web_fetch page extraction.
-    web_tools = MCPTools(
-        url="https://search.parallel.ai/mcp", transport="streamable-http", name="parallel_tools", timeout_seconds=30
-    )
+    web_tools = None
 
 # The Agno team's memory: per-user profile and memory, and a shared entity store.
 memory = LearningMachine(
@@ -119,7 +122,7 @@ agno_team = Team(
     offload_tool_results=result_store,
     # The learning machine attaches its tools, guidance, and recall automatically.
     learning=memory,
-    tools=[notes.tools(), web_tools, studio_runners],
+    tools=[t for t in (notes.tools(), web_tools, studio_runners) if t is not None],
     members=[platform_builder, platform_manager, platform_engineer],
     instructions=[INSTRUCTIONS, notes.instructions()],
     # Identity fallback for unauthenticated runs (dev MCP, evals).

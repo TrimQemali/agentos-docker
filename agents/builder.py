@@ -10,7 +10,7 @@ from app.learning import shared_learning
 from app.offload import result_store
 from app.registry import registry
 from app.settings import default_model
-from app.tools import get_agno_docs_tools, get_knowledge_management_tools
+from app.tools import get_knowledge_management_tools  # get_agno_docs_tools disabled below
 from db import get_postgres_db
 
 INSTRUCTIONS = """\
@@ -129,7 +129,10 @@ platform_builder = Agent(
     # The learning machine attaches its tools, guidance, and recall automatically.
     learning=shared_learning,
     tools=[
-        *get_agno_docs_tools(),
+        # TEMPORARILY DISABLED: docs.agno.com/mcp is returning 429 (rate-limited) to this
+        # host, and AgentOS refuses to boot if any agent-attached MCP tool can't connect
+        # at startup. Re-enable (`*get_agno_docs_tools(),`) once docs.agno.com is reachable
+        # again -- see app/tools.py's get_agno_docs_tools().
         get_knowledge_management_tools(),
         StudioTools(
             registry=registry,
