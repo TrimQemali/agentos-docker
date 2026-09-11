@@ -93,13 +93,27 @@ def _check_runtime() -> CheckResult:
 
 
 def _check_openai_key() -> CheckResult:
-    """The one env var whose absence every other check survives."""
-    if getenv("OPENAI_API_KEY"):
-        return _pass("OpenAI key", "Set — models, knowledge embeddings, and the registry's media tools.")
+    """OPENAI_API_KEY no longer gates model calls on its own: default_model() (app/settings.py)
+    currently reads ZAI_API_KEY for z.ai's GLM Coding Plan endpoint. OPENAI_API_KEY still
+    gates knowledge-base embeddings and the registry's OpenAI-based image/speech tools —
+    check whichever key the active model provider needs for the pass/fail line, and treat
+    OPENAI_API_KEY's absence as its own narrower warning rather than a blanket failure.
+    """
+    model_key_set = bool(getenv("ZAI_API_KEY") or getenv("OPENAI_API_KEY"))
+    openai_key_set = bool(getenv("OPENAI_API_KEY"))
+
+    if model_key_set and openai_key_set:
+        return _pass("Model & OpenAI key", "Both set — models, knowledge embeddings, and the registry's media tools.")
+    if model_key_set:
+        return _warn(
+            "Model & OpenAI key",
+            "Model provider key is set (models will run), but OPENAI_API_KEY is not: "
+            "knowledge embeddings and the registry's image/speech tools are unconfigured.",
+        )
     return _fail(
-        "OpenAI key",
-        "OPENAI_API_KEY is not set: every model call fails, knowledge cannot embed, and the "
-        "registry drops its image and speech tools with no warning.",
+        "Model & OpenAI key",
+        "Neither ZAI_API_KEY nor OPENAI_API_KEY is set: every model call fails, knowledge "
+        "cannot embed, and the registry drops its image and speech tools with no warning.",
     )
 
 
